@@ -87,3 +87,4 @@ When using the typewriter effect:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests.
+

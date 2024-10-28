@@ -261,24 +261,50 @@ end
 
 -- Insert selected snippet
 function M.insert_snippet(bufnr, mode)
-    local snippets = vim.b[bufnr].snippets
-    local current_line = vim.api.nvim_win_get_cursor(0)[1]
-    local selected = snippets[current_line]
-
-    if selected then
-        local content = read_file(selected.path)
-        vim.cmd('q') -- Close popup
-
-        if mode == 'typewriter' or (mode == nil and M.config.default_insert_mode == 'typewriter') then
-            -- Use typewriter effect
-            M.typewriter_effect(content)
-        else
-            -- Instant insert
-            local pos = vim.api.nvim_win_get_cursor(0)
-            local line = pos[1] - 1
-            vim.api.nvim_buf_set_lines(0, line, line, false, vim.split(content, "\n"))
-        end
+    -- Check if buffer exists
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+        vim.notify("CodeCast: Invalid buffer", vim.log.levels.ERROR)
+        return false
     end
+
+    -- Get snippets from buffer variables with validation
+    local buffer_snippets = vim.b[bufnr] and vim.b[bufnr].snippets
+    if not buffer_snippets then
+        vim.notify("CodeCast: No snippets found in buffer", vim.log.levels.ERROR)
+        vim.notify(string.format("CodeCast: Buffers: %s", vim.b[bufnr].snippets), vim.log.levels.ERROR)
+        return false
+    end
+
+    -- Get current line with validation
+    local current_line = vim.api.nvim_win_get_cursor(0)[1]
+    local selected = buffer_snippets[current_line]
+
+    if not selected then
+        vim.notify("CodeCast: No snippet selected", vim.log.levels.ERROR)
+        return false
+    end
+
+    -- Read file content
+    local content = read_file(selected.path)
+    if not content then
+        vim.notify(string.format("CodeCast: Could not read snippet file: %s", selected.path), vim.log.levels.ERROR)
+        return false
+    end
+
+    -- Close popup
+    vim.cmd('q')
+
+    if mode == 'typewriter' or (mode == nil and M.config.default_insert_mode == 'typewriter') then
+        -- Use typewriter effect
+        M.typewriter_effect(content)
+    else
+        -- Instant insert
+        local pos = vim.api.nvim_win_get_cursor(0)
+        local line = pos[1] - 1
+        vim.api.nvim_buf_set_lines(0, line, line, false, vim.split(content, "\n"))
+    end
+
+    return true
 end
 
 -- Setup function with improved initialization
