@@ -4,13 +4,27 @@ local popup = require('plenary.popup')
 local scan = require('plenary.scandir')
 
 M.NAME = "CodeCast.nvim"
-M.VERSION = "0.0.1"
+M.VERSION = "0.0.2"
 
--- Configuration
+-- Configuration with keybinding options
 M.config = {
     snippets_dir = vim.fn.stdpath('config') .. '/codecast/snippets',
     typewriter_speed = 50, -- milliseconds between characters
     default_insert_mode = 'typewriter', -- 'instant' or 'typewriter'
+    keybindings = {
+        -- Global mappings
+        show_snippets = '<leader>cc',  -- Open snippet selector
+
+        -- Snippet selector mappings
+        instant_insert = '<CR>',       -- Insert snippet instantly
+        typewriter_insert = '<leader><CR>', -- Insert with typewriter effect
+        close_selector = '<Esc>',      -- Close snippet selector
+
+        -- Typewriter control mappings
+        stop_typing = '<C-c>',         -- Stop typewriter effect
+        pause_typing = '<C-p>',        -- Pause typewriter effect
+        resume_typing = '<C-g>'        -- Resume typewriter effect
+    }
 }
 
 -- Store active timer and typing state globally
@@ -47,6 +61,30 @@ local function get_snippets()
         }
     end
     return snippets
+end
+
+-- Utility function to create a keymap
+local function create_keymap(mode, lhs, rhs, opts)
+    if type(lhs) == "table" then
+        -- Handle multiple keybindings for the same action
+        for _, key in ipairs(lhs) do
+            vim.keymap.set(mode, key, rhs, opts)
+        end
+    else
+        vim.keymap.set(mode, lhs, rhs, opts)
+    end
+end
+
+-- Utility function to remove a keymap
+local function remove_keymap(mode, lhs)
+    if type(lhs) == "table" then
+        -- Handle multiple keybindings for the same action
+        for _, key in ipairs(lhs) do
+            vim.keymap.del(mode, key)
+        end
+    else
+        vim.keymap.del(mode, lhs)
+    end
 end
 
 -- Function to stop the typewriter effect
@@ -126,7 +164,7 @@ end
 function M.show_snippet_selector()
     local snippets = get_snippets()
     local width = 80
-   local height = #snippets + 2
+    local height = #snippets + 2
     local borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" }
 
     local bufnr = vim.api.nvim_create_buf(false, true)
@@ -146,23 +184,30 @@ function M.show_snippet_selector()
     end
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
 
-    -- Set up keymaps
+    -- Set up keymaps with custom bindings
     local opts = { noremap = true, silent = true }
+    
     -- Normal insert (instant)
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', string.format(
-        [[<cmd>lua require('codecast').insert_snippet(%d, 'instant')<CR>]], bufnr
-    ), opts)
+    vim.api.nvim_buf_set_keymap(bufnr, 'n', M.config.keybindings.instant_insert, 
+        string.format([[<cmd>lua require('codecast').insert_snippet(%d, 'instant')<CR>]], bufnr), opts)
+    
     -- Typewriter effect insert
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader><CR>', string.format(
-        [[<cmd>lua require('codecast').insert_snippet(%d, 'typewriter')<CR>]], bufnr
-    ), opts)
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', '<Esc>', '<cmd>q<CR>', opts)
+    vim.api.nvim_buf_set_keymap(bufnr, 'n', M.config.keybindings.typewriter_insert,
+        string.format([[<cmd>lua require('codecast').insert_snippet(%d, 'typewriter')<CR>]], bufnr), opts)
+    
+    -- Close selector
+    vim.api.nvim_buf_set_keymap(bufnr, 'n', M.config.keybindings.close_selector, '<cmd>q<CR>', opts)
 
     -- Store snippets data
     vim.b[bufnr].snippets = snippets
 
-    -- Add a helpful message at the bottom of the popup
-    local help_msg = {"", "Press <CR> for instant insert, <leader><CR> for typewriter effect"}
+    -- Add a helpful message showing the configured keybindings
+    local help_msg = {
+        "",
+        string.format("Press %s for instant insert, %s for typewriter effect",
+            M.config.keybindings.instant_insert,
+            M.config.keybindings.typewriter_insert)
+    }
     vim.api.nvim_buf_set_lines(bufnr, height-2, height, false, help_msg)
 end
 
@@ -191,19 +236,17 @@ function M.typewriter_effect(text, callback)
     vim.api.nvim_buf_set_lines(0, M.typing_state.start_line, M.typing_state.start_line,
                               false, empty_lines)
 
-    -- Set up mappings
+    -- Set up mappings with custom keybindings
     local function setup_mappings()
-        vim.keymap.set({'n', 'i', 'v'}, '<C-c>', M.stop_typewriter, { silent = true })
-        vim.keymap.set({'n', 'i', 'v'}, '<Esc>', M.stop_typewriter, { silent = true })
-        vim.keymap.set({'n', 'i', 'v'}, '<C-p>', M.pause_typewriter, { silent = true })
-        vim.keymap.set({'n', 'i', 'v'}, '<C-g>', M.resume_typewriter, { silent = true })
+        create_keymap({'n', 'i', 'v'}, M.config.keybindings.stop_typing, M.stop_typewriter, { silent = true })
+        create_keymap({'n', 'i', 'v'}, M.config.keybindings.pause_typing, M.pause_typewriter, { silent = true })
+        create_keymap({'n', 'i', 'v'}, M.config.keybindings.resume_typing, M.resume_typewriter, { silent = true })
     end
 
     local function cleanup_mappings()
-        vim.keymap.del({'n', 'i', 'v'}, '<C-c>')
-        vim.keymap.del({'n', 'i', 'v'}, '<Esc>')
-        vim.keymap.del({'n', 'i', 'v'}, '<C-p>')
-        vim.keymap.del({'n', 'i', 'v'}, '<C-g>')
+        remove_keymap({'n', 'i', 'v'}, M.config.keybindings.stop_typing)
+        remove_keymap({'n', 'i', 'v'}, M.config.keybindings.pause_typing)
+        remove_keymap({'n', 'i', 'v'}, M.config.keybindings.resume_typing)
     end
 
     setup_mappings()
@@ -240,8 +283,8 @@ end
 
 -- Setup function with improved initialization
 function M.setup(opts)
-    -- Merge user config with defaults
-    M.config = vim.tbl_extend('force', M.config, opts or {})
+    -- Merge user config with defaults using deep extend
+    M.config = vim.tbl_deep_extend('force', M.config, opts or {})
 
     -- Create snippets directory structure
     local snippets_dir = M.config.snippets_dir
@@ -250,8 +293,9 @@ function M.setup(opts)
         print(string.format("CodeCast: Created snippets directory at %s", snippets_dir))
     end
 
-    -- Create default keymaps
-    vim.api.nvim_set_keymap('n', '<leader>cc', '<cmd>lua require("codecast").show_snippet_selector()<CR>',
+    -- Create global keymap for showing snippet selector
+    vim.api.nvim_set_keymap('n', M.config.keybindings.show_snippets,
+        '<cmd>lua require("codecast").show_snippet_selector()<CR>',
         { noremap = true, silent = true, desc = "Show CodeCast Snippets" })
 end
 
