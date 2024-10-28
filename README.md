@@ -1,5 +1,7 @@
 # CodeCast.nvim
 
+> NOTE: This plugin is still in it's early stages. Kind of a way for me to learn Lua and the Neovim ecosystem
+
 A Neovim plugin for creating code demonstrations with typewriter effects.
 
 ## Installation
