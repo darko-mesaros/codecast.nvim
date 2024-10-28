@@ -152,11 +152,11 @@ function M.show_snippet_selector()
     local opts = { noremap = true, silent = true }
     -- Normal insert (instant)
     vim.api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', string.format(
-        [[<cmd>lua require('user.codecast').insert_snippet(%d, 'instant')<CR>]], bufnr
+        [[<cmd>lua require('codecast').insert_snippet(%d, 'instant')<CR>]], bufnr
     ), opts)
     -- Typewriter effect insert
     vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader><CR>', string.format(
-        [[<cmd>lua require('user.codecast').insert_snippet(%d, 'typewriter')<CR>]], bufnr
+        [[<cmd>lua require('codecast').insert_snippet(%d, 'typewriter')<CR>]], bufnr
     ), opts)
     vim.api.nvim_buf_set_keymap(bufnr, 'n', 'q', '<cmd>q<CR>', opts)
 
@@ -253,7 +253,7 @@ function M.setup(opts)
     end
 
     -- Create default keymaps
-    vim.api.nvim_set_keymap('n', '<leader>cc', '<cmd>lua require("user.codecast").show_snippet_selector()<CR>', 
+    vim.api.nvim_set_keymap('n', '<leader>cc', '<cmd>lua require("codecast").show_snippet_selector()<CR>', 
         { noremap = true, silent = true, desc = "Show CodeCast Snippets" })
 end
 
