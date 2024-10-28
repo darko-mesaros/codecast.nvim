@@ -1,17 +1,14 @@
 -- tests/minimal_init.lua
+local plenary_path = vim.fn.stdpath("data") .. "/site/pack/vendor/start/plenary.nvim"
+
+-- Set up paths
 vim.cmd [[set runtimepath=$VIMRUNTIME]]
 vim.cmd [[set packpath=/tmp/nvim/site]]
-vim.cmd [[set hidden]]
 
-local package_root = '/tmp/nvim/site/pack'
-local install_path = package_root .. '/packer/start/packer.nvim'
+-- Add our plugin and plenary to runtimepath
+local plugin_path = vim.fn.getcwd()
+vim.opt.runtimepath:append(plugin_path)
+vim.opt.runtimepath:append(plenary_path)
 
-local function load_plugins()
-    require('packer').startup(function(use)
-        use 'nvim-lua/plenary.nvim'
-        use { '.',  path = vim.fn.getcwd() }
-    end)
-end
-
-load_plugins()
+-- Load plenary
 require('plenary.busted')

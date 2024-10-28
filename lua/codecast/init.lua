@@ -288,10 +288,24 @@ function M.setup(opts)
 
     -- Create snippets directory structure
     local snippets_dir = M.config.snippets_dir
-    if not vim.fn.isdirectory(snippets_dir) then
-        vim.fn.mkdir(snippets_dir, 'p')
-        print(string.format("CodeCast: Created snippets directory at %s", snippets_dir))
+      -- Expand the path to handle '~' or environment variables
+    snippets_dir = vim.fn.expand(snippets_dir)
+    -- Check if directory exists (vim.fn.isdirectory returns 1 for true, 0 for false)
+    if vim.fn.isdirectory(snippets_dir) == 0 then
+        -- Directory doesn't exist, create it
+        local success = vim.fn.mkdir(snippets_dir, 'p')
+
+        if success == 1 then
+            vim.notify(string.format("CodeCast: Created snippets directory at %s", snippets_dir), vim.log.levels.INFO)
+        else
+            vim.notify(string.format("CodeCast: Failed to create snippets directory at %s", snippets_dir), vim.log.levels.ERROR)
+            return false
+        end
+    else
+        vim.notify(string.format("CodeCast: Using existing snippets directory at %s", snippets_dir), vim.log.levels.INFO)
     end
+
+
 
     -- Create global keymap for showing snippet selector
     vim.api.nvim_set_keymap('n', M.config.keybindings.show_snippets,

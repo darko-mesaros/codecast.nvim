@@ -1,5 +1,5 @@
 # .github/workflows/test.yml
-name: StandardTests
+name: Tests
 
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
 
     - name: Install dependencies
       run: |
+        mkdir -p ~/.local/share/nvim/site/pack/vendor/start
         git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
-        ln -s $(pwd) ~/.local/share/nvim/site/pack/vendor/start
 
     - name: Run tests
       run: |
-        nvim --headless -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
+        nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
