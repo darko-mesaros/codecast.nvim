@@ -76,12 +76,10 @@ function M.resume_typewriter()
     if M.active_timer and M.is_paused then
         M.is_typing = true
         M.is_paused = false
-        
         -- Restart the timer with the stored state
         M.active_timer:start(0, M.config.typewriter_speed, vim.schedule_wrap(function()
             M.type_next_char()
         end))
-        
         vim.api.nvim_echo({{'CodeCast: Typing resumed', 'WarningMsg'}}, false, {})
     end
 end
@@ -111,15 +109,15 @@ function M.type_next_char()
     end
 
     local partial_line = string.sub(line, 1, state.current_char)
-    vim.api.nvim_buf_set_lines(0, state.start_line + state.current_line - 1, 
-                              state.start_line + state.current_line, false, 
+    vim.api.nvim_buf_set_lines(0, state.start_line + state.current_line - 1,
+                              state.start_line + state.current_line, false,
                               {partial_line})
-    
+
     -- Update cursor position within the current line
-    vim.api.nvim_win_set_cursor(state.win, {state.start_line + state.current_line, 
+    vim.api.nvim_win_set_cursor(state.win, {state.start_line + state.current_line,
                                            state.current_char - 1})
     state.current_char = state.current_char + 1
-    
+
     -- Keep the cursor line centered
     vim.cmd('normal! zz')
 end
@@ -127,10 +125,10 @@ end
 -- Create snippet selector window
 function M.show_snippet_selector()
     local snippets = get_snippets()
-    local width = 60
-    local height = #snippets + 2
+    local width = 80
+   local height = #snippets + 2
     local borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" }
-    
+
     local bufnr = vim.api.nvim_create_buf(false, true)
     local win_id = popup.create(bufnr, {
         title = "CodeCast Snippets",
@@ -158,11 +156,11 @@ function M.show_snippet_selector()
     vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader><CR>', string.format(
         [[<cmd>lua require('codecast').insert_snippet(%d, 'typewriter')<CR>]], bufnr
     ), opts)
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'q', '<cmd>q<CR>', opts)
+    vim.api.nvim_buf_set_keymap(bufnr, 'n', '<Esc>', '<cmd>q<CR>', opts)
 
     -- Store snippets data
     vim.b[bufnr].snippets = snippets
-    
+
     -- Add a helpful message at the bottom of the popup
     local help_msg = {"", "Press <CR> for instant insert, <leader><CR> for typewriter effect"}
     vim.api.nvim_buf_set_lines(bufnr, height-2, height, false, help_msg)
@@ -190,7 +188,7 @@ function M.typewriter_effect(text, callback)
     for i = 1, #M.typing_state.lines do
         empty_lines[i] = ""
     end
-    vim.api.nvim_buf_set_lines(0, M.typing_state.start_line, M.typing_state.start_line, 
+    vim.api.nvim_buf_set_lines(0, M.typing_state.start_line, M.typing_state.start_line,
                               false, empty_lines)
 
     -- Set up mappings
@@ -211,7 +209,7 @@ function M.typewriter_effect(text, callback)
     setup_mappings()
     M.is_typing = true
     M.is_paused = false
-    
+
     M.active_timer = vim.loop.new_timer()
     M.active_timer:start(0, M.config.typewriter_speed, vim.schedule_wrap(function()
         M.type_next_char()
@@ -223,11 +221,11 @@ function M.insert_snippet(bufnr, mode)
     local snippets = vim.b[bufnr].snippets
     local current_line = vim.api.nvim_win_get_cursor(0)[1]
     local selected = snippets[current_line]
-    
+
     if selected then
         local content = read_file(selected.path)
         vim.cmd('q') -- Close popup
-        
+
         if mode == 'typewriter' or (mode == nil and M.config.default_insert_mode == 'typewriter') then
             -- Use typewriter effect
             M.typewriter_effect(content)
@@ -244,7 +242,7 @@ end
 function M.setup(opts)
     -- Merge user config with defaults
     M.config = vim.tbl_extend('force', M.config, opts or {})
-    
+
     -- Create snippets directory structure
     local snippets_dir = M.config.snippets_dir
     if not vim.fn.isdirectory(snippets_dir) then
@@ -253,7 +251,7 @@ function M.setup(opts)
     end
 
     -- Create default keymaps
-    vim.api.nvim_set_keymap('n', '<leader>cc', '<cmd>lua require("codecast").show_snippet_selector()<CR>', 
+    vim.api.nvim_set_keymap('n', '<leader>cc', '<cmd>lua require("codecast").show_snippet_selector()<CR>',
         { noremap = true, silent = true, desc = "Show CodeCast Snippets" })
 end
 
