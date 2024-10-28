@@ -50,16 +50,24 @@ local function read_file(path)
 end
 
 -- Function to get all snippet files
-local function get_snippets()
+local function get_snippets(hidden)
     local snippets = {}
     local files = scan.scan_dir(M.config.snippets_dir, { depth = 1, search_pattern = "%.%w+$" })
     for _, file in ipairs(files) do
         local name = vim.fn.fnamemodify(file, ":t")
-        if not name:match("%.HIDDEN$") then
+        -- control if we show the .HIDDEN files
+        if hidden then
           snippets[#snippets + 1] = {
               name = name,
               path = file
           }
+        else
+          if not name:match("%.HIDDEN$") then
+            snippets[#snippets + 1] = {
+                name = name,
+                path = file
+            }
+          end
         end
     end
     return snippets
@@ -164,7 +172,7 @@ end
 
 -- Create snippet selector window
 function M.show_snippet_selector()
-    local snippets = get_snippets()
+    local snippets = get_snippets(false)
     local width = 80
     local height = #snippets + 2
     local borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" }
