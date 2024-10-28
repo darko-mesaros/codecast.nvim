@@ -196,15 +196,15 @@ function M.show_snippet_selector()
 
     -- Set up keymaps with custom bindings
     local opts = { noremap = true, silent = true }
-    
+
     -- Normal insert (instant)
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', M.config.keybindings.instant_insert, 
+    vim.api.nvim_buf_set_keymap(bufnr, 'n', M.config.keybindings.instant_insert,
         string.format([[<cmd>lua require('codecast').insert_snippet(%d, 'instant')<CR>]], bufnr), opts)
-    
+
     -- Typewriter effect insert
     vim.api.nvim_buf_set_keymap(bufnr, 'n', M.config.keybindings.typewriter_insert,
         string.format([[<cmd>lua require('codecast').insert_snippet(%d, 'typewriter')<CR>]], bufnr), opts)
-    
+
     -- Close selector
     vim.api.nvim_buf_set_keymap(bufnr, 'n', M.config.keybindings.close_selector, '<cmd>q<CR>', opts)
 
@@ -340,8 +340,6 @@ function M.setup(opts)
     else
         vim.notify(string.format("CodeCast: Using existing snippets directory at %s", snippets_dir), vim.log.levels.INFO)
     end
-
-
 
     -- Create global keymap for showing snippet selector
     vim.api.nvim_set_keymap('n', M.config.keybindings.show_snippets,
