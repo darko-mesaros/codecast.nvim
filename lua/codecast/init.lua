@@ -55,10 +55,12 @@ local function get_snippets()
     local files = scan.scan_dir(M.config.snippets_dir, { depth = 1, search_pattern = "%.%w+$" })
     for _, file in ipairs(files) do
         local name = vim.fn.fnamemodify(file, ":t")
-        snippets[#snippets + 1] = {
-            name = name,
-            path = file
-        }
+        if not name:match("%.HIDDEN$") then
+          snippets[#snippets + 1] = {
+              name = name,
+              path = file
+          }
+        end
     end
     return snippets
 end
